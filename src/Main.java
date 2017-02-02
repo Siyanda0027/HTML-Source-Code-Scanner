@@ -19,6 +19,7 @@ public class Main
     static ArrayList<htmlWebpageRecord> recordList;
 
     public static void main(String[] args) throws Exception {
+    	System.out.println("\n\nHTML Source Code Scanner Version 1.0 Successfully Launched\n");
         do {
             webpage = getWebpageFromUser();
             isValidWebpage = isUsersWebpageValid();
@@ -62,7 +63,7 @@ public class Main
                     }
                     else
                     {
-                        System.out.println("Notice: The source code on " + webpage+ "has changed");
+                        System.out.println("\nNotice: The source code on " + webpage+ "has changed");
                     }
                 }
             }
@@ -72,7 +73,7 @@ public class Main
 
     private static String getWebpageFromUser()
     {
-        System.out.println("Please enter the full URL for the webpage that you want to track:");
+        System.out.println("Please enter the full URL for the webpage whose HTML source code you want to track:");
         return scanner.nextLine().toString();
     }
 
