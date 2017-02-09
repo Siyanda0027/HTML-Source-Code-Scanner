@@ -273,8 +273,14 @@ public class Main
     {
         System.out.println("\nChange Report:");
         System.out.println("--------------------------------------------------");
-        System.out.println("The change was detected when comparing the source code of Record #: "+(recordList.indexOf(preSourceCodeChangeRecord)+1)+ " and Record #: "+(recordList.indexOf(postSourceCodeChangeRecord)+1)+".");
-        System.out.println("According to our records, the change must have occured sometime between "+preSourceCodeChangeRecord.getTimestampAccessed()+ " and "+postSourceCodeChangeRecord.getTimestampAccessed()+ " Unix time.");
+        if(sourceCodeDifferenceFound){
+        	System.out.println("The change was detected when comparing the source code of Record #: "+(recordList.indexOf(preSourceCodeChangeRecord)+1)+ " and Record #: "+(recordList.indexOf(postSourceCodeChangeRecord)+1)+".");
+            System.out.println("According to our records, the change must have occured sometime between "+preSourceCodeChangeRecord.getTimestampAccessed()+ " and "+postSourceCodeChangeRecord.getTimestampAccessed()+ " Unix time.");
+        }
+        else
+        {
+        	System.out.println("No source code changes occured!");
+        }
     }
 }
 
