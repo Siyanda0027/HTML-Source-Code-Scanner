@@ -2,7 +2,7 @@
 A java application that automatically checks a website's HTML source code for changes and alerts the user when changes have occurred.
 
 ## Example Use Cases
-* Joe recently attended a try-out for a travel sports team. He want to be alerted when the team website is posts an update to the roster.
+* Joe recently attended a try-out for a travel sports team. He want to be alerted when the team website is updated with the new roster.
 * As a software QA tester, Sallie wants to make sure that only certain pages are changed when new code is released.
 *  Bill is a huge FatBurger fan. He recently heard that a FatBurger will be opening in a local shopping center. On FatBurger's website, the page for the new location says "Coming Soon!". Bill wants to be alerted when that website for the new location changes.
 
