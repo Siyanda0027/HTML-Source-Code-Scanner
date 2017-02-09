@@ -18,6 +18,8 @@ public class Main
     static boolean sourceCodeDifferenceFound;
     static ArrayList<htmlWebpageRecord> recordList;
     static boolean infiniteComparison = false;
+    static htmlWebpageRecord preSourceCodeChangeRecord;
+    static htmlWebpageRecord postSourceCodeChangeRecord;
 
     public static void main(String[] args) throws Exception {
     	System.out.println("\nHTML Source Code Scanner Version 1.1 Successfully Launched\n");
@@ -28,6 +30,7 @@ public class Main
         refreshRate = getRefreshRateFromUser();
         getMaxNumberOfRefreshesFromUser();
         htmlCompareProcess();
+        displayChangeReport();
     }
 
     private static String getWebpageFromUser()
@@ -200,21 +203,33 @@ public class Main
 
         if(infiniteComparison == false) {
             for (int i = 0; i <= maxNumberOfCompares; i++) {
-                htmlWebpageRecord recentlyCreatedRecord;
-                recentlyCreatedRecord = generateHtmlWebpageRecord(i);
-                recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
-                compareRecordsAndUpdateActivityReport();
-                Thread.sleep(refreshRate);
+                if(sourceCodeDifferenceFound == false)
+                {
+                    htmlWebpageRecord recentlyCreatedRecord;
+                    recentlyCreatedRecord = generateHtmlWebpageRecord(i);
+                    recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
+                    compareRecordsAndUpdateActivityReport();
+                    Thread.sleep(refreshRate);
+                }
+                else{
+                    return;
+                }
             }
         }
         else
         {
             for (int i = 0; i <= 0; i--) {
-                htmlWebpageRecord recentlyCreatedRecord;
-                recentlyCreatedRecord = generateHtmlWebpageRecord(i*-1);
-                recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
-                compareRecordsAndUpdateActivityReport();
-                Thread.sleep(refreshRate);
+                if(sourceCodeDifferenceFound == false)
+                {
+                    htmlWebpageRecord recentlyCreatedRecord;
+                    recentlyCreatedRecord = generateHtmlWebpageRecord(i*-1);
+                    recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
+                    compareRecordsAndUpdateActivityReport();
+                    Thread.sleep(refreshRate);
+                }
+                else{
+                    return;
+                }
             }
         }
     }
@@ -243,12 +258,23 @@ public class Main
                         }
                     }
                 }
-                else
+                else //A source code change has been detected
                 {
-                    System.out.println("\nNotice: The source code on " + website+ "has changed");
+                    preSourceCodeChangeRecord = recordList.get(i-1);
+                    postSourceCodeChangeRecord = recordList.get(i);
+                    System.out.println("\nNotice: The source code on " + website+ " has changed!");
+                    return;
                 }
             }
         }
+    }
+
+    public static void displayChangeReport()
+    {
+        System.out.println("\nChange Report:");
+        System.out.println("--------------------------------------------------");
+        System.out.println("The change was detected when comparing the source code of Record #: "+(recordList.indexOf(preSourceCodeChangeRecord)+1)+ " and Record #: "+(recordList.indexOf(postSourceCodeChangeRecord)+1)+".");
+        System.out.println("According to our records, the change must have occured sometime between "+preSourceCodeChangeRecord.getTimestampAccessed()+ " and "+postSourceCodeChangeRecord.getTimestampAccessed()+ " Unix time.");
     }
 }
 
