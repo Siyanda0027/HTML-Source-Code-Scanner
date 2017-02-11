@@ -3,14 +3,15 @@ import org.jsoup.Jsoup;
 import java.io.IOException;
 import java.time.Instant;
 
-public class htmlWebpageRecord {
+public class htmlWebsiteRecord {
     int version;
     String url;
     String sourceCode;
-    long timestampAccessed; //Unix timestamp
+    String timestampAccessed;
     boolean hasBeenCompared = false;
 
-    public long getTimestampAccessed() {
+    public String getTimestampAccessed()
+    {
         return timestampAccessed;
     }
 
@@ -34,19 +35,21 @@ public class htmlWebpageRecord {
         this.version = version;
     }
 
-    public String getSourceCode() throws Exception {
+    public void loadSourceCode() throws Exception {
         if(url.equals(null))
         {
-            throw new Exception("A webpageRecord's source code was requested before a URL was defined.");
+            throw new Exception("A websiteRecord's source code was requested before a URL was defined.");
         }
-
         try {
             sourceCode = Jsoup.connect(url).get().html();
-            this.timestampAccessed = Instant.now().getEpochSecond();
+            this.timestampAccessed = utils.dataTranslations.convertUnixTimeToStandardTime(Instant.now().getEpochSecond(), settings.getUserTimeZone());
         } catch (IOException e) {
             System.out.println("Error: Unable to gather the source code from the URL.");
             e.printStackTrace();
         }
+    }
+
+    public String getSourceCode(){
         return sourceCode;
     }
 }

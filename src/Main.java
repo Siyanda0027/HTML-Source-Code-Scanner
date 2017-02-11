@@ -1,145 +1,166 @@
 import org.jsoup.Jsoup;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
+import java.net.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-public class Main
+public class main
 {
     static Scanner scanner = new Scanner(System.in);
-    static long refreshRate;
-    static int maxNumberOfCompares;
-    static String website;
     static boolean isValidWebpage;
     static boolean sourceCodeDifferenceFound;
-    static ArrayList<htmlWebpageRecord> recordList;
-    static boolean infiniteComparison = false;
-    static htmlWebpageRecord preSourceCodeChangeRecord;
-    static htmlWebpageRecord postSourceCodeChangeRecord;
+    static ArrayList<htmlWebsiteRecord> recordList;
+    static htmlWebsiteRecord preSourceCodeChangeRecord;
+    static htmlWebsiteRecord postSourceCodeChangeRecord;
 
     public static void main(String[] args) throws Exception {
-    	System.out.println("\nHTML Source Code Scanner Version 1.1 Successfully Launched\n");
+    	System.out.println("\nHTML Source Code Scanner Version 1.2 Successfully Launched\n");
+        settings.setUserTimeZone(Calendar.getInstance().getTimeZone());
         do {
-            website = getWebpageFromUser();
-            isValidWebpage = isUsersWebpageValid();
+            getWebsiteFromUser();
+            verifyValidWebsite();
         }while (isValidWebpage == false);
-        refreshRate = getRefreshRateFromUser();
+        getRefreshRateFromUser();
         getMaxNumberOfRefreshesFromUser();
         htmlCompareProcess();
         displayChangeReport();
     }
 
-    private static String getWebpageFromUser()
+    private static void getWebsiteFromUser()
     {
         System.out.println("Please enter the full URL for the website whose HTML source code you want to track:");
-        return scanner.nextLine();
+        settings.setWebsite(scanner.nextLine());
     }
 
-    private static boolean isUsersWebpageValid() {
+    private static void verifyValidWebsite() {
         String sourceCode = "";
 
         //Verify that the URL is reachable
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(website).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new URL(settings.getWebsite()).openConnection();
             connection.setRequestMethod("HEAD");
             int responseCode = connection.getResponseCode();
-            if (responseCode != 200) //200 is the success response code for webpages
+            if (responseCode != 200) //200 is the success response code for websites
             {
                 System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.");
-                return false;
+                isValidWebpage = false;
+                return;
             }
         } catch (ProtocolException e) {
             System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.\nNOTE: This error may be caused by an incorrect URL protocol.");
-            //e.printStackTrace();
-            return false;
+            isValidWebpage =  false;
+            return;
         } catch (MalformedURLException e) {
             System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.\nNote: This error may be caused by a Malformed URL.");
             //TODO: Research this exception and provide the user with details that will help them fix the URL.
-            //e.printStackTrace();
-            return false;
+            isValidWebpage =  false;
+            return;
 
         } catch (IOException e) {
             System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.\nNote: This error may be caused by an IOException.");
             //TODO: Research this exception and provide the user with details that will help them fix the URL.
-            //e.printStackTrace();
-            return false;
+            isValidWebpage = false;
+            return;
+        } catch (Exception e) {
+            System.out.println("Error: An error occurred while testing the URL. Please try again.");
+            isValidWebpage = false;
+            return;
         }
 
         //See if the source code is retrievable.
         try {
-            sourceCode = Jsoup.connect(website).get().html();
+            sourceCode = Jsoup.connect(settings.getWebsite()).get().html();
         } catch (IOException e)
         {
             System.out.println("Error: Unable to gather website's source code. Please try again.\nNote: This error may be caused by an IOException.");
-            //e.printStackTrace();
+            isValidWebpage = false;
+            return;
         }
 
         if (sourceCode.equals(null)) {
             System.out.println("Error: Unable to gather the source code from the URL. Please try again.");
-            return false;
+            isValidWebpage = false;
+            return;
         }
-        System.out.println("\n"+ website +" has been confirmed as a valid, trackable URL.");
-        return true;
+
+        System.out.println("\n"+ settings.getWebsite() +" has been confirmed as a valid, trackable URL.");
+        isValidWebpage = true;
     }
 
-    private static long getRefreshRateFromUser()
+    private static void getRefreshRateFromUser()
     {
-        int refreshType;
+        int refreshType = 0;
         int refreshFrequency;
         long refreshRate = 0;
 
-        System.out.println("Please enter how often you would like to evaluate the source code of " + website + " for changes.");
-        System.out.println("Please enter \"1\" if you would like to track "+ website + "'s changes every X second(s).");
-        System.out.println("Please enter \"2\" if you would like to track "+ website + "'s changes every X minute(s).");
-        System.out.println("Please enter \"3\" if you would like to track "+ website + "'s changes every X hour(s).");
-        System.out.println("Please enter \"4\" if you would like to track "+ website + "'s changes every X day(s).");
-        System.out.println("Please enter \"5\" if you would like to track "+ website + "'s changes every X week(s).");
+        do {
+            System.out.println("\nPlease enter how often you would like to evaluate the source code of " + settings.getWebsite() + " for changes.\n");
+            System.out.println("Please enter \"1\" if you would like to track "+ settings.getWebsite() + "'s changes every X second(s).");
+            System.out.println("Please enter \"2\" if you would like to track "+ settings.getWebsite() + "'s changes every X minute(s).");
+            System.out.println("Please enter \"3\" if you would like to track "+ settings.getWebsite() + "'s changes every X hour(s).");
+            System.out.println("Please enter \"4\" if you would like to track "+ settings.getWebsite() + "'s changes every X day(s).");
+            System.out.println("Please enter \"5\" if you would like to track "+ settings.getWebsite() + "'s changes every X week(s).");
+            if (scanner.hasNextLine()) {
+                String userInput = scanner.nextLine(); //You have to save the value of scanner.nextLine because it changes each time you access it via scanner.next...
+                try{
+                    if((Integer.valueOf(userInput) >= 1) && (Integer.valueOf(userInput) <= 5))
+                    {
+                        refreshType = Integer.valueOf(userInput);
+                    }
+                    else{
+                        System.out.println("Error: You entered an invalid option. Please enter 1, 2, 3, 4, or 5.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    System.out.println("Error: You entered an invalid option. Please enter 1, 2, 3, 4, or 5.");
+                }
 
-        refreshType = scanner.nextInt();
+            }
+
+        } while (refreshType == 0);
 
         switch(refreshType)
         {
             case 1:
                 	System.out.println("Enter the number of seconds between each evaluation.");
                 	refreshFrequency = scanner.nextInt();
-                	System.out.println(""+website+" will be checked for source code changes every " + refreshFrequency + " second(s).");
+                	System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " second(s).");
                 	refreshRate = TimeUnit.SECONDS.toMillis(refreshFrequency);
                 	break;
 
             case 2:
                     System.out.println("Enter the number of minutes between each evaluation.");
                     refreshFrequency = scanner.nextInt();
-                    System.out.println(""+website+" will be checked for source code changes every " + refreshFrequency + " minute(s).");
+                    System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " minute(s).");
                     refreshRate = TimeUnit.MINUTES.toMillis(refreshFrequency);
                     break;
 
             case 3:
                     System.out.println("Enter the number of hours between each evaluation.");
                     refreshFrequency = scanner.nextInt();
-                    System.out.println(""+website+" will be checked for source code changes every " + refreshFrequency + " hour(s).");
+                    System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " hour(s).");
                     refreshRate = TimeUnit.HOURS.toMillis(refreshFrequency);
                     break;
 
             case 4:
                     System.out.println("Enter the number of days between each evaluation.");
                     refreshFrequency = scanner.nextInt();
-                    System.out.println(""+website+" will be checked for source code changes every " + refreshFrequency + " day(s).");
+                    System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " day(s).");
                     refreshRate = TimeUnit.DAYS.toMillis(refreshFrequency);
                     break;
 
             case 5:
-                    System.out.println("Enter the weeks of seconds between each evaluation.");
+                    System.out.println("Enter the number of weeks between each evaluation.");
                     refreshFrequency = scanner.nextInt();
-                    System.out.println(""+website+" will be checked for source code changes every " + refreshFrequency + " week(s).");
+                    System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " week(s).");
                     refreshRate = (TimeUnit.DAYS.toMillis(refreshFrequency) * 7); // Times 7 because the TimeUnit library only goes up to Days to millis conversion.
                     break;
         }
 
-        return refreshRate;
+        settings.setRefreshRate(refreshRate);
     }
 
     private static void getMaxNumberOfRefreshesFromUser()
@@ -155,26 +176,26 @@ public class Main
         }
         if(userResponceToIndefQuestion.equalsIgnoreCase("yes"))
         {
-            infiniteComparison = true;
+            settings.setInfiniteComparison(true);
         }
         else
         {
-            infiniteComparison = false;
-            System.out.println("What is the maximum number of times that you would like to check for changes to " + website + "'s source code?");
-            maxNumberOfCompares = scanner.nextInt();
+            settings.setInfiniteComparison(false);
+            System.out.println("What is the maximum number of times that you would like to check for changes to " + settings.getWebsite() + "'s source code?");
+            settings.setMaxNumberOfCompares(scanner.nextInt());
         }
     }
 
-    private static htmlWebpageRecord generateHtmlWebpageRecord(int recordNumber)
-    {
-        htmlWebpageRecord record = new htmlWebpageRecord();
+    private static htmlWebsiteRecord generateHtmlWebpageRecord(int recordNumber) throws Exception {
+        htmlWebsiteRecord record = new htmlWebsiteRecord();
         record.setVersion(recordNumber);
-        record.setUrl(website);
-        System.out.println("New website record created. (Record #: "+(record.getVersion()+1)+")");
+        record.setUrl(settings.getWebsite());
+        record.loadSourceCode();
+        System.out.println("New website record created. (Record #: "+(record.getVersion()+1)+", Timestamp: " +record.getTimestampAccessed()+ ")");
         return record;
     }
 
-    private static boolean doHtmlRecordsMatch(htmlWebpageRecord firstRecord, htmlWebpageRecord secondRecord) throws Exception
+    private static boolean doHtmlRecordsMatch(htmlWebsiteRecord firstRecord, htmlWebsiteRecord secondRecord) throws Exception
     {
         firstRecord.setHasBeenCompared(true);
         secondRecord.setHasBeenCompared(true);
@@ -191,41 +212,39 @@ public class Main
 
     private static void htmlCompareProcess() throws Exception {
 
+        recordList = new ArrayList<>();
+
         System.out.println("\nActivity Report:");
         System.out.println("--------------------------------------------------");
-        if(infiniteComparison)
+        if(settings.isInfiniteComparison())
         {
             System.out.println("*** NOTE: You have selected an indefinite comparison.\n*** TO STOP THE COMPARISON, PRESS \"CNTRL+C\". ");
             System.out.println("--------------------------------------------------");
-        }
 
-        recordList = new ArrayList<>();
-
-        if(infiniteComparison == false) {
-            for (int i = 0; i <= maxNumberOfCompares; i++) {
+            for (int i = 0; i <= 0; i--) //Note: This loop is infinite, hence the indefinite comparison.
+            {
                 if(sourceCodeDifferenceFound == false)
                 {
-                    htmlWebpageRecord recentlyCreatedRecord;
-                    recentlyCreatedRecord = generateHtmlWebpageRecord(i);
+                    htmlWebsiteRecord recentlyCreatedRecord;
+                    recentlyCreatedRecord = generateHtmlWebpageRecord(i*-1);
                     recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
                     compareRecordsAndUpdateActivityReport();
-                    Thread.sleep(refreshRate);
+                    Thread.sleep(settings.getRefreshRate());
                 }
                 else{
                     return;
                 }
             }
-        }
-        else
-        {
-            for (int i = 0; i <= 0; i--) {
+        } else {
+            for (int i = 0; i <= settings.getMaxNumberOfCompares(); i++)
+            {
                 if(sourceCodeDifferenceFound == false)
                 {
-                    htmlWebpageRecord recentlyCreatedRecord;
-                    recentlyCreatedRecord = generateHtmlWebpageRecord(i*-1);
+                    htmlWebsiteRecord recentlyCreatedRecord;
+                    recentlyCreatedRecord = generateHtmlWebpageRecord(i);
                     recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
                     compareRecordsAndUpdateActivityReport();
-                    Thread.sleep(refreshRate);
+                    Thread.sleep(settings.getRefreshRate());
                 }
                 else{
                     return;
@@ -252,7 +271,7 @@ public class Main
                             sourceCodeDifferenceFound = doHtmlRecordsMatch(recordList.get(i), recordList.get(i+1));
                             if(sourceCodeDifferenceFound != true)
                             {
-                                System.out.println("No source code change found between webpage record "+(recordList.get(i).getVersion()+1)+" & "+(recordList.get(i+1).getVersion()+1));
+                                System.out.println("No source code change found between website record "+(recordList.get(i).getVersion()+1)+" & "+(recordList.get(i+1).getVersion()+1));
                                 //TODO: Remove and destroy record at recordList[i] to free system resources. This may require an arrayList shift.
                             }
                         }
@@ -262,7 +281,7 @@ public class Main
                 {
                     preSourceCodeChangeRecord = recordList.get(i-1);
                     postSourceCodeChangeRecord = recordList.get(i);
-                    System.out.println("\nNotice: The source code on " + website+ " has changed!");
+                    System.out.println("\nNotice: The source code on " + settings.getWebsite()+ " has changed!");
                     return;
                 }
             }
@@ -275,11 +294,11 @@ public class Main
         System.out.println("--------------------------------------------------");
         if(sourceCodeDifferenceFound){
         	System.out.println("The change was detected when comparing the source code of Record #: "+(recordList.indexOf(preSourceCodeChangeRecord)+1)+ " and Record #: "+(recordList.indexOf(postSourceCodeChangeRecord)+1)+".");
-            System.out.println("According to our records, the change must have occured sometime between "+preSourceCodeChangeRecord.getTimestampAccessed()+ " and "+postSourceCodeChangeRecord.getTimestampAccessed()+ " Unix time.");
+            System.out.println("Therefore, the change must have occurred sometime between "+preSourceCodeChangeRecord.getTimestampAccessed()+ " and "+postSourceCodeChangeRecord.getTimestampAccessed()+ ".");
         }
         else
         {
-        	System.out.println("No source code changes occured!");
+        	System.out.println("No source code changes occurred!");
         }
     }
 }
