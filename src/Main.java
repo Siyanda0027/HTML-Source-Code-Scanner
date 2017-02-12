@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit;
 public class main
 {
     static Scanner scanner = new Scanner(System.in);
-    static boolean isValidWebpage;
+    static boolean isValidWebsite;
     static boolean sourceCodeDifferenceFound;
-    static ArrayList<htmlWebsiteRecord> recordList;
+    static ArrayList<htmlWebsiteRecord> recordList = new ArrayList<>();
     static htmlWebsiteRecord preSourceCodeChangeRecord;
     static htmlWebsiteRecord postSourceCodeChangeRecord;
 
@@ -21,7 +21,7 @@ public class main
         do {
             getWebsiteFromUser();
             verifyValidWebsite();
-        }while (isValidWebpage == false);
+        }while (isValidWebsite == false);
         getRefreshRateFromUser();
         getMaxNumberOfRefreshesFromUser();
         htmlCompareProcess();
@@ -44,28 +44,28 @@ public class main
             int responseCode = connection.getResponseCode();
             if (responseCode != 200) //200 is the success response code for websites
             {
-                System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.");
-                isValidWebpage = false;
+                System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL correctly and try again.");
+                isValidWebsite = false;
                 return;
             }
         } catch (ProtocolException e) {
-            System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.\nNOTE: This error may be caused by an incorrect URL protocol.");
-            isValidWebpage =  false;
+            System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL correctly and try again.\nNOTE: This error may have been caused by an incorrect URL protocol.");
+            isValidWebsite =  false;
             return;
         } catch (MalformedURLException e) {
-            System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.\nNote: This error may be caused by a Malformed URL.");
+            System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL correctly and try again.\nNote: This error may have been caused by a Malformed URL.");
             //TODO: Research this exception and provide the user with details that will help them fix the URL.
-            isValidWebpage =  false;
+            isValidWebsite =  false;
             return;
 
         } catch (IOException e) {
-            System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL fully and correctly and try again.\nNote: This error may be caused by an IOException.");
+            System.out.println("Error: Unable to connect to URL. Please verify that you entered the URL correctly and try again.\nNote: This error may have been caused by an IOException.");
             //TODO: Research this exception and provide the user with details that will help them fix the URL.
-            isValidWebpage = false;
+            isValidWebsite = false;
             return;
         } catch (Exception e) {
             System.out.println("Error: An error occurred while testing the URL. Please try again.");
-            isValidWebpage = false;
+            isValidWebsite = false;
             return;
         }
 
@@ -75,18 +75,18 @@ public class main
         } catch (IOException e)
         {
             System.out.println("Error: Unable to gather website's source code. Please try again.\nNote: This error may be caused by an IOException.");
-            isValidWebpage = false;
+            isValidWebsite = false;
             return;
         }
 
         if (sourceCode.equals(null)) {
             System.out.println("Error: Unable to gather the source code from the URL. Please try again.");
-            isValidWebpage = false;
+            isValidWebsite = false;
             return;
         }
 
         System.out.println("\n"+ settings.getWebsite() +" has been confirmed as a valid, trackable URL.");
-        isValidWebpage = true;
+        isValidWebsite = true;
     }
 
     private static void getRefreshRateFromUser()
@@ -187,10 +187,7 @@ public class main
     }
 
     private static htmlWebsiteRecord generateHtmlWebpageRecord(int recordNumber) throws Exception {
-        htmlWebsiteRecord record = new htmlWebsiteRecord();
-        record.setVersion(recordNumber);
-        record.setUrl(settings.getWebsite());
-        record.loadSourceCode();
+        htmlWebsiteRecord record = new htmlWebsiteRecord(recordNumber, settings.getWebsite());
         System.out.println("New website record created. (Record #: "+(record.getVersion()+1)+", Timestamp: " +record.getTimestampAccessed()+ ")");
         return record;
     }
@@ -211,8 +208,6 @@ public class main
     }
 
     private static void htmlCompareProcess() throws Exception {
-
-        recordList = new ArrayList<>();
 
         System.out.println("\nActivity Report:");
         System.out.println("--------------------------------------------------");
