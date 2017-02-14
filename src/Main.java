@@ -1,8 +1,15 @@
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -14,10 +21,12 @@ public class main
     static ArrayList<htmlWebsiteRecord> recordList = new ArrayList<>();
     static htmlWebsiteRecord preSourceCodeChangeRecord;
     static htmlWebsiteRecord postSourceCodeChangeRecord;
+    static String difference = "";
 
     public static void main(String[] args) throws Exception {
-    	System.out.println("\nHTML Source Code Scanner Version 1.2 Successfully Launched\n");
-        settings.setUserTimeZone(Calendar.getInstance().getTimeZone());
+
+    	System.out.println("\nHTML Source Code Scanner Version 1.3 Successfully Launched\n");
+        settings.getAutomaticSettings();
         do {
             getWebsiteFromUser();
             verifyValidWebsite();
@@ -26,6 +35,7 @@ public class main
         getMaxNumberOfRefreshesFromUser();
         htmlCompareProcess();
         displayChangeReport();
+        scanner.close();
     }
 
     private static void getWebsiteFromUser()
@@ -203,6 +213,7 @@ public class main
         }
         else
         {
+           difference = StringUtils.difference(firstRecord.getSourceCode(),secondRecord.getSourceCode());
            return false;
         }
     }
@@ -263,7 +274,7 @@ public class main
                     {
                         if(recordList.get(i).getHasBeenCompared() == false || recordList.get(i+1).getHasBeenCompared() == false)
                         {
-                            sourceCodeDifferenceFound = doHtmlRecordsMatch(recordList.get(i), recordList.get(i+1));
+                            sourceCodeDifferenceFound = !doHtmlRecordsMatch(recordList.get(i), recordList.get(i+1));
                             if(sourceCodeDifferenceFound != true)
                             {
                                 System.out.println("No source code change found between website record "+(recordList.get(i).getVersion()+1)+" & "+(recordList.get(i+1).getVersion()+1));
@@ -283,17 +294,45 @@ public class main
         }
     }
 
-    public static void displayChangeReport()
+    public static void displayChangeReport() throws IOException
     {
         System.out.println("\nChange Report:");
         System.out.println("--------------------------------------------------");
-        if(sourceCodeDifferenceFound){
-        	System.out.println("The change was detected when comparing the source code of Record #: "+(recordList.indexOf(preSourceCodeChangeRecord)+1)+ " and Record #: "+(recordList.indexOf(postSourceCodeChangeRecord)+1)+".");
-            System.out.println("Therefore, the change must have occurred sometime between "+preSourceCodeChangeRecord.getTimestampAccessed()+ " and "+postSourceCodeChangeRecord.getTimestampAccessed()+ ".");
+        if(sourceCodeDifferenceFound)
+        {
+            String changeDetectedMessage1 = "The change was detected when comparing the source code of Record #: "+(recordList.indexOf(preSourceCodeChangeRecord)+1)+ " and Record #: "+(recordList.indexOf(postSourceCodeChangeRecord)+1)+".";
+            String changeDetectedMessage2 = "Therefore, the change occurred sometime between "+preSourceCodeChangeRecord.getTimestampAccessed()+ " and "+postSourceCodeChangeRecord.getTimestampAccessed()+ ".";
+            String changeReportFileName = "HSCSReport"+ Instant.now().getEpochSecond()+".txt"; //Uses the current unix timestamp to generate unique file names. HSCS = HTML Source Code Scanner.
+
+        	System.out.println(changeDetectedMessage1);
+            System.out.println(changeDetectedMessage2);
+
+            File changeReport = new File(settings.getUserHomeDirectory(), changeReportFileName);
+            BufferedWriter fileWriter = new BufferedWriter(new FileWriter(changeReport));
+            try {
+                fileWriter.write("HTML-Source-Code-Scanner Source Code Change Report:");
+                fileWriter.newLine();
+                fileWriter.newLine();
+                fileWriter.write("Website Tracked: "+ settings.getWebsite());
+                fileWriter.newLine();
+                fileWriter.write(changeDetectedMessage1);
+                fileWriter.newLine();
+                fileWriter.write(changeDetectedMessage2);
+                fileWriter.newLine();
+                fileWriter.newLine();
+                fileWriter.write("Source Code Change:");
+                fileWriter.newLine();
+                fileWriter.write("--------------------------------------------------");
+                fileWriter.newLine();
+                fileWriter.write(difference);
+            } finally {
+                System.out.println("\nNOTE: A text file containing more details has been created and saved to your desktop. See: \""+changeReportFileName+"\"");
+                fileWriter.close();
+            }
         }
         else
         {
-        	System.out.println("No source code changes occurred!");
+        	System.out.println("No source code change occurred!");
         }
     }
 }

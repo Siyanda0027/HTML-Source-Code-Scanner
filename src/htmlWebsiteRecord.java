@@ -36,7 +36,7 @@ public class htmlWebsiteRecord {
 
     public void loadSourceCode() throws Exception {
         try {
-            sourceCode = Jsoup.connect(url).get().html();
+            sourceCode = Jsoup.connect(url).get().html().trim();
             this.timestampAccessed = dataConversions.convertUnixTimeToStandardTime(Instant.now().getEpochSecond(), settings.getUserTimeZone());
         } catch (IOException e) {
             System.out.println("Error: Unable to gather the source code from the URL.");

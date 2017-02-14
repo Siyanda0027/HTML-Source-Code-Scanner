@@ -1,3 +1,5 @@
+import javax.swing.filechooser.FileSystemView;
+import java.util.Calendar;
 import java.util.TimeZone;
 
 public class settings
@@ -5,6 +7,7 @@ public class settings
     private static long refreshRate;
     private static int maxNumberOfCompares;
     private static String website;
+    private static String userHomeDirectory;
     private static boolean infiniteComparison = false;
     private static TimeZone userTimeZone;
 
@@ -46,5 +49,20 @@ public class settings
 
     public static TimeZone getUserTimeZone(){
         return userTimeZone;
+    }
+
+    public static void setUserHomeDirectory(String directory)
+    {
+        userHomeDirectory = directory;
+    }
+
+    public static String getUserHomeDirectory(){
+        return userHomeDirectory;
+    }
+
+    public static void getAutomaticSettings()
+    {
+        setUserTimeZone(Calendar.getInstance().getTimeZone());
+        setUserHomeDirectory(FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath());
     }
 }
