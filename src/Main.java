@@ -10,12 +10,10 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class main
 {
-    static Scanner scanner = new Scanner(System.in);
     static boolean isValidWebsite;
     static boolean sourceCodeDifferenceFound;
     static ArrayList<htmlWebsiteRecord> recordList = new ArrayList<>();
@@ -35,13 +33,12 @@ public class main
         getMaxNumberOfRefreshesFromUser();
         htmlCompareProcess();
         displayChangeReport();
-        scanner.close();
     }
 
     private static void getWebsiteFromUser()
     {
         System.out.println("Please enter the full URL for the website whose HTML source code you want to track:");
-        settings.setWebsite(scanner.nextLine());
+        settings.setWebsite(utils.input.getStringFromConsole());
     }
 
     private static void verifyValidWebsite() {
@@ -112,22 +109,20 @@ public class main
             System.out.println("Please enter \"3\" if you would like to track "+ settings.getWebsite() + "'s changes every X hour(s).");
             System.out.println("Please enter \"4\" if you would like to track "+ settings.getWebsite() + "'s changes every X day(s).");
             System.out.println("Please enter \"5\" if you would like to track "+ settings.getWebsite() + "'s changes every X week(s).");
-            if (scanner.hasNextLine()) {
-                String userInput = scanner.nextLine(); //You have to save the value of scanner.nextLine because it changes each time you access it via scanner.next...
-                try{
-                    if((Integer.valueOf(userInput) >= 1) && (Integer.valueOf(userInput) <= 5))
-                    {
-                        refreshType = Integer.valueOf(userInput);
-                    }
-                    else{
-                        System.out.println("Error: You entered an invalid option. Please enter 1, 2, 3, 4, or 5.");
-                    }
-                }
-                catch (Exception e)
+
+            String userInput = utils.input.getStringFromConsole();
+            try{
+                if((Integer.valueOf(userInput) >= 1) && (Integer.valueOf(userInput) <= 5))
                 {
+                    refreshType = Integer.valueOf(userInput);
+                }
+                else{
                     System.out.println("Error: You entered an invalid option. Please enter 1, 2, 3, 4, or 5.");
                 }
-
+            }
+            catch (Exception e)
+            {
+                System.out.println("Error: You entered an invalid option. Please enter 1, 2, 3, 4, or 5.");
             }
 
         } while (refreshType == 0);
@@ -136,35 +131,35 @@ public class main
         {
             case 1:
                 	System.out.println("Enter the number of seconds between each evaluation.");
-                	refreshFrequency = scanner.nextInt();
+                	refreshFrequency = utils.input.getIntFromConsole();
                 	System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " second(s).");
                 	refreshRate = TimeUnit.SECONDS.toMillis(refreshFrequency);
                 	break;
 
             case 2:
                     System.out.println("Enter the number of minutes between each evaluation.");
-                    refreshFrequency = scanner.nextInt();
+                    refreshFrequency = utils.input.getIntFromConsole();
                     System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " minute(s).");
                     refreshRate = TimeUnit.MINUTES.toMillis(refreshFrequency);
                     break;
 
             case 3:
                     System.out.println("Enter the number of hours between each evaluation.");
-                    refreshFrequency = scanner.nextInt();
+                    refreshFrequency = utils.input.getIntFromConsole();
                     System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " hour(s).");
                     refreshRate = TimeUnit.HOURS.toMillis(refreshFrequency);
                     break;
 
             case 4:
                     System.out.println("Enter the number of days between each evaluation.");
-                    refreshFrequency = scanner.nextInt();
+                    refreshFrequency = utils.input.getIntFromConsole();
                     System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " day(s).");
                     refreshRate = TimeUnit.DAYS.toMillis(refreshFrequency);
                     break;
 
             case 5:
                     System.out.println("Enter the number of weeks between each evaluation.");
-                    refreshFrequency = scanner.nextInt();
+                    refreshFrequency = utils.input.getIntFromConsole();
                     System.out.println(settings.getWebsite()+" will be checked for source code changes every " + refreshFrequency + " week(s).");
                     refreshRate = (TimeUnit.DAYS.toMillis(refreshFrequency) * 7); // Times 7 because the TimeUnit library only goes up to Days to millis conversion.
                     break;
@@ -175,28 +170,21 @@ public class main
 
     private static void getMaxNumberOfRefreshesFromUser()
     {
-        String userResponceToIndefQuestion;
 
         System.out.println("Would you like to perform the checks indefinitely?");
-        userResponceToIndefQuestion = scanner.next();
-        if(userResponceToIndefQuestion.equalsIgnoreCase("yes") == false && userResponceToIndefQuestion.equalsIgnoreCase("no") == false)
-        {
-            System.out.println("ERROR: Please enter \"Yes\" or \"no\"");
-            getMaxNumberOfRefreshesFromUser();
-        }
-        if(userResponceToIndefQuestion.equalsIgnoreCase("yes"))
+
+        if(utils.input.getBooleanFromConsole())
         {
             settings.setInfiniteComparison(true);
         }
-        else
-        {
+        else {
             settings.setInfiniteComparison(false);
             System.out.println("What is the maximum number of times that you would like to check for changes to " + settings.getWebsite() + "'s source code?");
-            settings.setMaxNumberOfCompares(scanner.nextInt());
+            settings.setMaxNumberOfCompares(utils.input.getIntFromConsole());
         }
     }
 
-    private static htmlWebsiteRecord generateHtmlWebpageRecord(int recordNumber) throws Exception {
+    private static htmlWebsiteRecord generateHtmlWebsiteRecord(int recordNumber) throws Exception {
         htmlWebsiteRecord record = new htmlWebsiteRecord(recordNumber, settings.getWebsite());
         System.out.println("New website record created. (Record #: "+(record.getVersion()+1)+", Timestamp: " +record.getTimestampAccessed()+ ")");
         return record;
@@ -232,7 +220,7 @@ public class main
                 if(sourceCodeDifferenceFound == false)
                 {
                     htmlWebsiteRecord recentlyCreatedRecord;
-                    recentlyCreatedRecord = generateHtmlWebpageRecord(i*-1);
+                    recentlyCreatedRecord = generateHtmlWebsiteRecord(i*-1);
                     recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
                     compareRecordsAndUpdateActivityReport();
                     Thread.sleep(settings.getRefreshRate());
@@ -247,7 +235,7 @@ public class main
                 if(sourceCodeDifferenceFound == false)
                 {
                     htmlWebsiteRecord recentlyCreatedRecord;
-                    recentlyCreatedRecord = generateHtmlWebpageRecord(i);
+                    recentlyCreatedRecord = generateHtmlWebsiteRecord(i);
                     recordList.add(recentlyCreatedRecord.getVersion(), recentlyCreatedRecord);
                     compareRecordsAndUpdateActivityReport();
                     Thread.sleep(settings.getRefreshRate());
@@ -326,7 +314,7 @@ public class main
                 fileWriter.newLine();
                 fileWriter.write(difference);
             } finally {
-                System.out.println("\nNOTE: A text file containing more details has been created and saved to your desktop. See: \""+changeReportFileName+"\"");
+                System.out.println("\n" + "NOTE: A text file containing more details has been created and saved to your desktop. See: \""+changeReportFileName+"\"");
                 fileWriter.close();
             }
         }
